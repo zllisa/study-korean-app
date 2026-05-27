@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  level     String   @default("beginner")
+  createdAt DateTime @default(now())
+
+  sessions   Session[]
+  errors     ErrorRecord[]
+  vocabulary Vocabulary[]
+  stats      LearningStats[]
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  topic     String?
+  mode      String    @default("free")
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  session     Session  @relation(fields: [sessionId], references: [id])
+  role        String
+  content     String
+  translation String?
+  createdAt   DateTime @default(now())
+}
+
+model ErrorRecord {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  errorText   String
+  correction  String
+  explanation String
+  errorType   String   @default("grammar")
+  count       Int      @default(1)
+  lastSeen    DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Vocabulary {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  word          String
+  meaning       String
+  pronunciation String?
+  examples      String?
+  mastery       Int       @default(0)
+  interval      Int       @default(1)
+  easeFactor    Float     @default(2.5)
+  reviewCount   Int       @default(0)
+  nextReview    DateTime  @default(now())
+  lastReviewed  DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model LearningStats {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  date          DateTime @default(now())
+  duration      Int      @default(0)
+  messagesCount Int      @default(0)
+  errorsCount   Int      @default(0)
+}

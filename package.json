@@ -1,0 +1,11 @@
+{
+  "name": "korean-app",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "setup": "cd backend && npm run db:generate && npm run db:push",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npm run dev:backend & npm run dev:frontend"
+  }
+}
