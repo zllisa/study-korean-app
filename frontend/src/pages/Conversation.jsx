@@ -41,9 +41,31 @@ export default function Conversation() {
   const { isListening, isSpeaking, startListening, stopListening, speak, stopSpeaking } = useVoice()
 
   useEffect(() => { autoVoiceLoopRef.current = autoVoiceLoop }, [autoVoiceLoop])
-  useEffect(() => { startSession() }, [topic])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
-  useEffect(() => { loadHistory() }, [])
+  useEffect(() => {
+    return () => { stopSpeaking(); stopListening() }
+  }, [])
+  useEffect(() => {
+    loadHistory()
+    try {
+      const saved = sessionStorage.getItem('korean_session')
+      if (saved) {
+        const { sessionId: sid, messages: msgs, topic: t } = JSON.parse(saved)
+        setSessionId(sid)
+        setMessages(msgs)
+        setTopic(t)
+        return
+      }
+    } catch {
+      sessionStorage.removeItem('korean_session')
+    }
+    startSession()
+  }, [])
+  useEffect(() => {
+    if (sessionId && messages.length > 0) {
+      sessionStorage.setItem('korean_session', JSON.stringify({ sessionId, messages, topic }))
+    }
+  }, [sessionId, messages, topic])
 
   const loadHistory = async () => {
     try {
@@ -107,19 +129,21 @@ export default function Conversation() {
     }
   }
 
-  const startSession = async () => {
+  const startSession = async (newTopic) => {
+    const activeTopic = newTopic ?? topic
+    sessionStorage.removeItem('korean_session')
     setMessages([])
     setSessionId(null)
     try {
       const { data } = await api.post('/conversation/start', {
-        topic: topic === 'free' ? null : topic,
-        mode: topic === 'free' ? 'free' : 'topic',
+        topic: activeTopic === 'free' ? null : activeTopic,
+        mode: activeTopic === 'free' ? 'free' : 'topic',
       })
       setSessionId(data.sessionId)
-      const topicLabel = TOPICS.find(t => t.id === topic)?.label
-      const greeting = topic === 'free'
+      const topicLabel = TOPICS.find(t => t.id === activeTopic)?.label
+      const greeting = activeTopic === 'free'
         ? { role: 'assistant', content: '안녕하세요! 오늘은 무슨 이야기를 해볼까요? 😊\n[中文：你好！今天想聊什么话题呢？]', translation: '你好！今天想聊什么话题呢？' }
-        : { role: 'assistant', content: `${topic} 주제로 대화해 봅시다! 준비됐나요? 😊\n[中文：让我们来聊"${topicLabel}"的话题吧！准备好了吗？]`, translation: `让我们来聊"${topicLabel}"的话题吧！` }
+        : { role: 'assistant', content: `${activeTopic} 주제로 대화해 봅시다! 준비됐나요? 😊\n[中文：让我们来聊"${topicLabel}"的话题吧！准备好了吗？]`, translation: `让我们来聊"${topicLabel}"的话题吧！` }
       const korean = extractKorean(greeting.content.replace(/\[中文：.*?\]/g, '').trim())
       setMessages([greeting])
       setCurrentSpeakingId(0)
@@ -293,11 +317,18 @@ export default function Conversation() {
           >
             📋
           </button>
+          <button
+            onClick={() => { stopSpeaking(); stopListening(); setTopic('free'); startSession('free') }}
+            className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            title="新建对话"
+          >
+            ✏️
+          </button>
           <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
           {TOPICS.map(t => (
             <button
               key={t.id}
-              onClick={() => setTopic(t.id)}
+              onClick={() => { if (t.id !== topic) { stopSpeaking(); stopListening(); setTopic(t.id); startSession(t.id) } }}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 topic === t.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
