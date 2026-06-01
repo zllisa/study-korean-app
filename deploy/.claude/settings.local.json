@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -oP '.{0,80}\\(getSupportedConstraints|mediaDevices|getUserMedia|Microphone|microphone|SpeechRecognition|webkitSpeechRecognition|AudioContext|MediaRecorder\\).{0,80}' /Users/alvin/Desktop/deploy/frontend/dist/assets/index-DBXZyCDC.js)"
+    ]
+  }
+}

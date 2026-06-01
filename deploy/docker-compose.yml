@@ -7,7 +7,8 @@ services:
     env_file: .env
     environment:
       PORT: 4000
-      DATABASE_URL: file:/data/prod.db
+      DATABASE_URL: "file:/data/prod.db"
+      FRONTEND_URL: "https://aiphototo.com:9999"
     volumes:
       - db_data:/data
     restart: unless-stopped
@@ -16,7 +17,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "9999:80"
+      - "127.0.0.1:8080:80"
     depends_on:
       - backend
     restart: unless-stopped
