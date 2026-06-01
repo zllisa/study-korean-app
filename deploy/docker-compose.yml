@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      PORT: 4000
+      DATABASE_URL: file:/data/prod.db
+    volumes:
+      - db_data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "9999:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
